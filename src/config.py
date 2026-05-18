@@ -33,9 +33,19 @@ STREAMLIT_PORT = 8501
 # Students must replace this example with their trained models.
 # Each entry must point to a serialized model saved as `.joblib`, `.pkl`, or `.pickle`.
 MODELS = {
-    "model_a": {
-        "name": "Model A",
-        "description": "A simple baseline model.",
-        "path": MODELS_DIR / "model_a.pkl",
+    "ridge_regression": {
+        "name": "Ridge Baseline",
+        "description": "Linear regression baseline model.",
+        "path": MODELS_DIR / "ridge_model.pkl",  # Make sure this file exists in your models/ folder!
     },
+    "random_forest": {
+        "name": "Random Forest",
+        "description": "Ensemble bagging regression model.",
+        "path": MODELS_DIR / "rf_model.pkl",  # 👈 This registers your RF model!
+    },
+    "xgboost_champion": {
+        "name": "XGBoost Champion",
+        "description": "Gradient boosted trees optimization engine.",
+        "path": MODELS_DIR / "xgb_model.json",  # Make sure this file exists in your models/ folder!
+    }
 }

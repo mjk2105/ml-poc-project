@@ -7,6 +7,7 @@ evaluate every configured model on the same test split.
 from __future__ import annotations
 
 from typing import Any
+import pandas as pd
 
 
 def load_dataset_split() -> tuple[Any, Any, Any, Any]:
@@ -14,17 +15,17 @@ def load_dataset_split() -> tuple[Any, Any, Any, Any]:
 
     Expected return value:
         A tuple ``(X_train, X_test, y_train, y_test)``.
-
-    Constraints:
-    - ``X_train`` and ``X_test`` must contain feature data in a format accepted
-      by the trained models stored in ``config.MODELS``.
-    - ``y_train`` and ``y_test`` must contain the corresponding targets.
-    - ``y_test`` must align with the predictions produced by each loaded model.
-
-    Typical choices for the return types are ``pandas.DataFrame`` /
-    ``pandas.Series`` or ``numpy.ndarray``.
     """
-
-    raise NotImplementedError(
-        "Implement data.load_dataset_split() before running scripts/main.py."
-    )
+    # Point to your final processed master data split from your notebooks
+    # Note: Make sure this file is inside your datasets/ folder!
+    df = pd.read_csv("datasets/df_engineered_outfield.csv")
+    
+    # Split features and target
+    X = df.drop(columns=["market_value", "log_market_value"], errors="ignore")
+    y = df["log_market_value"]
+    
+    # Simulating a simple train/test split or returning subsets
+    X_train, X_test = X.iloc[:int(len(X)*0.8)], X.iloc[int(len(X)*0.8):]
+    y_train, y_test = y.iloc[:int(len(y)*0.8)], y.iloc[int(len(y)*0.8):]
+    
+    return X_train, X_test, y_train, y_test
