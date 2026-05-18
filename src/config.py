@@ -1,6 +1,9 @@
 from pathlib import Path
 
+# 1. Define PROJECT_ROOT first so everything below can safely use it!
 PROJECT_ROOT = Path(__file__).parent.parent
+
+# 2. Now define all your directories
 SRC_DIR = PROJECT_ROOT / "src"
 DATA_DIR = PROJECT_ROOT / "data"
 LOGS_DIR = PROJECT_ROOT / "logs"
@@ -11,6 +14,7 @@ RESULTS_DIR = PROJECT_ROOT / "results"
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 TESTS_DIR = PROJECT_ROOT / "tests"
 
+# 3. Create folders if they don't exist yet
 for dir in [
     DATA_DIR,
     LOGS_DIR,
@@ -30,22 +34,21 @@ MODEL_METRICS_FILE = RESULTS_DIR / "model_metrics.csv"
 STREAMLIT_HOST = "localhost"
 STREAMLIT_PORT = 8501
 
-# Students must replace this example with their trained models.
-# Each entry must point to a serialized model saved as `.joblib`, `.pkl`, or `.pickle`.
+# 4. Registered models dictionary mapping to Path objects
 MODELS = {
     "ridge_regression": {
         "name": "Ridge Baseline",
         "description": "Linear regression baseline model.",
-        "path": MODELS_DIR / "ridge_model.pkl",  # Make sure this file exists in your models/ folder!
+        "path": MODELS_DIR / "ridge_model.pkl",
     },
     "random_forest": {
         "name": "Random Forest",
         "description": "Ensemble bagging regression model.",
-        "path": MODELS_DIR / "rf_model.pkl",  # 👈 This registers your RF model!
+        "path": MODELS_DIR / "rf_model.pkl",
     },
     "xgboost_champion": {
         "name": "XGBoost Champion",
         "description": "Gradient boosted trees optimization engine.",
-        "path": MODELS_DIR / "xgb_model.json",  # Make sure this file exists in your models/ folder!
+        "path": MODELS_DIR / "xgb_model.json",
     }
 }
