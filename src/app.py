@@ -16,33 +16,28 @@ def build_app() -> None:
     fixed because ``scripts/main.py`` launches Streamlit with this module.
     """
 
-    st.set_page_config(page_title="ML Project Template", layout="wide")
+    st.set_page_config(page_title="Group 7 - Transfer Scout", layout="wide")
 
-    st.title("Machine Learning Proof of Concept")
+    st.title("🔍 The 'Value-for-Money' Transfer Scout")
     st.write(
-        "Update `src/app.py` to present your business objective, data insights, "
-        "model comparison, and final demo."
+        "Welcome to the Group 7 ML Proof of Concept. This application serves as a "
+        "predictive scouting engine designed to identify undervalued football talents "
+        "and suggest optimal budget alternatives using advanced machine learning."
     )
 
-    st.subheader("Expected student customizations")
+    st.subheader("Core Prototype Features")
     st.markdown(
         """
-        - Describe the business objective and dataset.
-        - Show relevant plots and key findings.
-        - Explain the selected models and their trade-offs.
-        - Add widgets or predictions if your project needs an interactive demo.
+        - **Budget Clone Finder:** Input a high-profile player to discover 3 budget-friendly alternatives with matching profiles.
+        - **Scout Search:** Filter by target position and club budget constraints to surface undervalued market gems.
+        - **Player Risk Profiles:** Evaluate underlying athletic performance metrics versus physical fragility and injury risk trends.
         """
     )
 
-    st.subheader("Latest evaluation results")
+    st.subheader("📊 Latest Model Evaluation Results")
     if MODEL_METRICS_FILE.exists():
         metrics_df = pd.read_csv(MODEL_METRICS_FILE)
         st.dataframe(metrics_df, use_container_width=True)
-    else:
-        st.info(
-            "Run `python scripts/main.py` after training your models to generate "
-            "`results/model_metrics.csv`."
-        )
 
 
 if __name__ == "__main__":
