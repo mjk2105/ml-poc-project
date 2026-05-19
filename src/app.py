@@ -553,9 +553,9 @@ def build_app() -> None:
 
         st.markdown("<div class='section-hd'>Model Comparison — D03 Results</div>", unsafe_allow_html=True)
         for col, (name, color, role, rmsle, mae, r2) in zip(st.columns(3), [
-            ("Ridge Regression", "#3498db", "Baseline",   1.12, 1.81, 0.43),
-            ("Random Forest",    "#e67e22", "Benchmark",  0.89, 1.12, 0.64),
-            ("XGBoost",          "#2ecc71", "⭐ Primary",  0.81, 0.95, 0.74),
+            ("Ridge Regression", "#3498db", "Baseline",   1.35, 1.76, 0.28),
+            ("Random Forest",    "#e67e22", "Benchmark",  1.32, 1.73, 0.31),
+            ("XGBoost",          "#2ecc71", "⭐ Primary",  1.31, 1.71, 0.32),
         ]):
             with col:
                 border = f"border:2px solid {color};" if name == "XGBoost" else ""
