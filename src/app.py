@@ -92,7 +92,7 @@ st.markdown("""
     margin:26px 0 16px 0;
   }
   .subtitle  { font-size:15px; color:#8e9aa8; margin-bottom:22px; }
-  .gap-pill  {
+  .gap-pill   {
     display:inline-block; background:rgba(46,204,113,0.2);
     color:#2ecc71; border:1px solid #2ecc71; border-radius:20px;
     padding:4px 14px; font-weight:700; font-size:13px;
@@ -110,11 +110,19 @@ st.markdown("""
 def load_data():
     df = pd.read_csv(DATA / "df_engineered_outfield.csv").fillna(0)
     try:
-        profiles = pd.read_csv(
-            DATA / "player_profiles.csv",
-            usecols=["player_id", "player_name", "citizenship"],
-        )
-        df = df.merge(profiles, on="player_id", how="left")
+        # Load the descriptive metadata directly mapping identities to IDs
+        profiles = pd.read_csv(DATA / "player_profiles.csv")
+        
+        # Standardize matching criteria keys depending on historical dataset splits
+        name_col = "name" if "name" in profiles.columns else "player_name"
+        
+        # Build optimized in-memory translation indexes
+        id_to_name = profiles.set_index("player_id")[name_col].to_dict()
+        id_to_citizenship = profiles.set_index("player_id")["citizenship"].to_dict() if "citizenship" in profiles.columns else {}
+        
+        # Inject metadata across rows 
+        df["player_name"] = df["player_id"].map(id_to_name)
+        df["citizenship"] = df["player_id"].map(id_to_citizenship)
     except Exception:
         df["player_name"] = "Player #" + df["player_id"].astype(str)
         df["citizenship"] = ""
@@ -122,7 +130,6 @@ def load_data():
     df["player_name"] = df["player_name"].fillna("Player #" + df["player_id"].astype(str))
     df["citizenship"] = df["citizenship"].fillna("")
     return df
-
 
 @st.cache_resource(show_spinner="Loading model…")
 def load_model():
@@ -271,7 +278,7 @@ def build_app() -> None:
         {n_total:,} outfield players<br>
         <span style='color:#2ecc71;'>{n_under:,} undervalued</span><br><br>
         <b style='color:#ffffff;'>Model</b><br>XGBoost (D03)<br>
-        RMSLE · MAE · R²
+        ...   RMSLE · MAE · R²
         </div>""", unsafe_allow_html=True)
 
     # ── PAGE 1 — OVERVIEW ─────────────────────────────────────────────────────
@@ -326,7 +333,7 @@ def build_app() -> None:
                 ("Median Market Value",    f"€{median_val:.2f}M", None),
                 ("Biggest Valuation Gap",   f"€{max_gap:.1f}M",     "Best buy signal"),
                 ("Avg Gap (undervalued)",   f"€{avg_gap:.1f}M",     None),
-                ("Top Predictive Feature", top_feat,              None),
+                ("Top Predictive Feature", top_feat,               None),
             ]:
                 sub_html = f"<div class='kpi-sub'>{sub}</div>" if sub else ""
                 st.markdown(f"""
@@ -417,7 +424,9 @@ def build_app() -> None:
             sim     = c.get("similarity", 0.0)
             prime   = 21 <= c["age"] <= 27
 
-            with st.expander(f"#{rank+1}  {c['player_name']}  ·  {c['position_clean']}  ·  Local Cost: €{c['market_value_eur']/1e6:.1f}M  ·  {sim:.0f}% Match", expanded=(rank == 0)):
+            position_lbl = c['position_clean'] if 'position_clean' in c else c['position_group']
+
+            with st.expander(f"#{rank+1}  {c['player_name']}  ·  {position_lbl}  ·  Local Cost: €{c['market_value_eur']/1e6:.1f}M  ·  {sim:.0f}% Match", expanded=(rank == 0)):
                 left, mid, right = st.columns([1.8, 2.2, 1.4])
 
                 with left:
@@ -426,10 +435,13 @@ def build_app() -> None:
                     tags += '<span class="tag tag-risk">⚠ High Risk</span>' if c["injury_risk_score"] > 0.35 else ""
                     tags += '<span class="tag tag-left">🦶 Left Foot</span>' if c["is_left_footed"] else ""
                     nat = f" · {c['citizenship']}" if c.get("citizenship") else ""
+                    
+                    days_injured_val = c['days_missed'] if 'days_missed' in c else 0
+                    
                     st.markdown(f"""
                     <div class='player-card'>
                       <div class='pname'>{c['player_name']}</div>
-                      <div class='psub'>{c['position_clean']} · Age {c['age']:.0f}{nat}</div>
+                      <div class='psub'>{position_lbl} · Age {c['age']:.0f}{nat}</div>
                       <div style='margin:8px 0;'>{tags}</div>
                       <table style='width:100%;font-size:13px;border-collapse:collapse;color:#f1f3f9;'>
                         <tr><td style='color:#8e9aa8;padding:4px 0;'>Market Price</td><td style='text-align:right;'><b>€{c['market_value_eur']/1e6:.1f}M</b></td></tr>
@@ -438,7 +450,7 @@ def build_app() -> None:
                         <tr><td style='color:#8e9aa8;padding:4px 0;'>Savings vs Target</td><td style='text-align:right;'><b>€{savings:.1f}M</b></td></tr>
                         <tr><td style='color:#8e9aa8;padding:4px 0;'>G+A per 90</td><td style='text-align:right;'><b>{c['goal_contributions_per_90']:.2f}</b></td></tr>
                         <tr><td style='color:#8e9aa8;padding:4px 0;'>Min / Game</td><td style='text-align:right;'><b>{c['minutes_per_game_proxy']:.0f}'</b></td></tr>
-                        <tr><td style='color:#8e9aa8;padding:4px 0;'>Days Injured</td><td style='text-align:right;'><b>{c['days_missed']:.0f} days</b></td></tr>
+                        <tr><td style='color:#8e9aa8;padding:4px 0;'>Days Injured</td><td style='text-align:right;'><b>{days_injured_val:.0f} days</b></td></tr>
                       </table>
                     </div>""", unsafe_allow_html=True)
 
@@ -450,12 +462,12 @@ def build_app() -> None:
                     st.markdown(f"""
                     <div style='text-align:center;margin-top:6px;'>
                       <div style='color:#8e9aa8;font-size:11px;'>Days Injured</div>
-                      <div style='font-size:20px;font-weight:700;color:#ffffff;'>{c['days_missed']:.0f}</div>
+                      <div style='font-size:20px;font-weight:700;color:#ffffff;'>{days_injured_val:.0f}</div>
                       <div style='color:#8e9aa8;font-size:11px;margin-top:4px;'>Risk Score</div>
                       <div style='font-size:20px;font-weight:700;color:#ffffff;'>{c['injury_risk_score']:.2f}</div>
                     </div>""", unsafe_allow_html=True)
 
-# ── PAGE 3 — SCOUT SEARCH (Truncation Fixed) ──────────────────────────────
+    # ── PAGE 3 — SCOUT SEARCH (Truncation Fixed) ──────────────────────────────
     elif page == "💼  Scout Search":
         st.markdown("# 💼 Scout Search")
         st.markdown("<div class='subtitle'>Set your budget and target position. The model returns the most undervalued players.</div>", unsafe_allow_html=True)
@@ -514,6 +526,8 @@ def build_app() -> None:
                     return f"€{int(val_eur / 1_000)}K"
                 return f"€{int(val_eur)}"
 
+            position_lbl = r['position_clean'] if 'position_clean' in r else r['position_group']
+
             # Optimized layout distribution grid with wider columns for metrics to stop text clipping
             # Expanded c6 (ROI) and metrics while shaving excess room off the player profile text block (c1)
             c0, c1, c2, c3, c4, c5, c6 = st.columns([0.4, 1.9, 1.3, 1.7, 1.2, 1.2, 1.7])
@@ -527,7 +541,7 @@ def build_app() -> None:
                 st.markdown(f"""
                 <div class='player-card' style='padding:10px 14px;'>
                   <div class='pname' style='font-size:14px;'>{r['player_name']}</div>
-                  <div class='psub'>{r['position_clean']} · Age {r['age']:.0f}{nat}</div>
+                  <div class='psub'>{position_lbl} · Age {r['age']:.0f}{nat}</div>
                   <div>{tags}</div>
                 </div>""", unsafe_allow_html=True)
             
